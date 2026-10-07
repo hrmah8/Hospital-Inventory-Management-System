@@ -11,28 +11,23 @@
     .low { background: #fff3cd; }
     .out { background: #f8d7da; }
     .filters, .pager { margin: 1rem 0; }
+    .filters input, .filters select, .filters button { margin-right: 0.4rem; padding: 4px; }
   </style>
 </head>
 <body>
   <h1>Inventory</h1>
 
   <form method="get" class="filters">
-    <input type="text" name="q" value="{{ q }}" placeholder="Search name or location">
-    <select name="category">
-      <option value="">All categories</option>
-      {% for c in categories %}
-        <option value="{{ c.id }}" {% if selected_category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
-      {% endfor %}
-    </select>
-    <select name="status">
-      <option value="">All statuses</option>
-      <option value="in"  {% if selected_status == "in" %}selected{% endif %}>In Stock</option>
-      <option value="low" {% if selected_status == "low" %}selected{% endif %}>Low Stock</option>
-      <option value="out" {% if selected_status == "out" %}selected{% endif %}>Out of Stock</option>
-    </select>
-    <button type="submit">Filter</button>
+    {{ form.q }}
+    {{ form.category }}
+    {{ form.location }}
+    {{ form.status }}
+    {{ form.sort }}
+    <button type="submit">Apply</button>
     <a href="{% url 'inventory:list' %}">Reset</a>
   </form>
+
+  <p>{{ page_obj.paginator.count }} item{{ page_obj.paginator.count|pluralize }} found</p>
 
   <table>
     <thead>

@@ -1,44 +1,55 @@
-from django.shortcuts import render
-
-# Create your views here.
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import F, Q
 from django.shortcuts import render
 
-from .models import Category, InventoryItem
+from .forms import InventoryFilterForm
+from .models import InventoryItem
 
 
 @login_required
 def inventory_list(request):
-    items = InventoryItem.objects.select_related("category").order_by("name")
+    form = InventoryFilterForm(request.GET or None)
+    items = InventoryItem.objects.select_related("category")
+    sort = "name"
 
-    q = request.GET.get("q", "").strip()
-    category_id = request.GET.get("category", "")
-    status = request.GET.get("status", "")
+    if form.is_valid():
+        data = form.cleaned_data
 
-    if q:
-        items = items.filter(Q(name__icontains=q) | Q(location__icontains=q))
-    if category_id.isdigit():
-        items = items.filter(category_id=category_id)
+        q = data["q"].strip()
+        if q:
+            items = items.filter(
+                Q(name__icontains=q)
+                | Q(category__name__icontains=q)
+                | Q(location__icontains=q)
+            )
 
-    if status == "out":
-        items = items.filter(quantity=0)
-    elif status == "low":
-        items = items.filter(quantity__gt=0, quantity__lte=F("threshold"))
-    elif status == "in":
-        items = items.filter(quantity__gt=F("threshold"))
+        if data["category"]:
+            items = items.filter(category=data["category"])
+
+        if data["location"]:
+            items = items.filter(location=data["location"])
+
+        status = data["status"]
+        if status == "out":
+            items = items.filter(quantity=0)
+        elif status == "low":
+            items = items.filter(quantity__gt=0, quantity__lte=F("threshold"))
+        elif status == "in":
+            items = items.filter(quantity__gt=F("threshold"))
+
+        sort = data["sort"] or "name"
+
+    items = items.order_by(sort, "pk")
 
     page_obj = Paginator(items, 20).get_page(request.GET.get("page"))
 
+    # keep the active filters in the pagination links
     params = request.GET.copy()
     params.pop("page", None)
 
     return render(request, "inventory/inventory_list.html", {
+        "form": form,
         "page_obj": page_obj,
-        "categories": Category.objects.order_by("name"),
-        "q": q,
-        "selected_category": category_id,
-        "selected_status": status,
         "query_string": params.urlencode(),
     })
