@@ -43,3 +43,17 @@ class InventoryFilterForm(forms.Form):
             .distinct()
         )
         self.fields["location"].choices = [("", "All locations")] + [(l, l) for l in locations]
+
+
+class QuantityUpdateForm(forms.Form):
+    ACTION_CHOICES = [
+        ("Restock", "Restock (add)"),
+        ("Usage", "Usage (remove)"),
+    ]
+
+    action_type = forms.ChoiceField(choices=ACTION_CHOICES)
+    amount = forms.IntegerField(min_value=1, max_value=100000)
+
+    def signed_change(self):
+        amount = self.cleaned_data["amount"]
+        return amount if self.cleaned_data["action_type"] == "Restock" else -amount

@@ -1,10 +1,16 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import F, Q
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
 
-from .forms import InventoryFilterForm
+from .forms import InventoryFilterForm, QuantityUpdateForm
 from .models import InventoryItem
+from .services import apply_quantity_change
 
 
 @login_required
@@ -44,7 +50,6 @@ def inventory_list(request):
 
     page_obj = Paginator(items, 20).get_page(request.GET.get("page"))
 
-    # keep the active filters in the pagination links
     params = request.GET.copy()
     params.pop("page", None)
 
@@ -53,3 +58,35 @@ def inventory_list(request):
         "page_obj": page_obj,
         "query_string": params.urlencode(),
     })
+
+
+@login_required
+@require_POST
+def update_quantity(request, pk):
+    item = get_object_or_404(InventoryItem, pk=pk)
+    form = QuantityUpdateForm(request.POST)
+
+    if form.is_valid():
+        try:
+            updated = apply_quantity_change(
+                item_id=item.pk,
+                user=request.user,
+                change=form.signed_change(),
+                action_type=form.cleaned_data["action_type"],
+            )
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+        else:
+            messages.success(
+                request, f"{updated.name}: quantity is now {updated.quantity}."
+            )
+    else:
+        for field_errors in form.errors.values():
+            for error in field_errors:
+                messages.error(request, error)
+
+    # Return to the same filtered/paginated list, but only to our own site
+    next_url = request.POST.get("next", "")
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = reverse("inventory:list")
+    return redirect(next_url)
