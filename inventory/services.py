@@ -4,14 +4,7 @@ from django.db.models import F
 
 from alerts.models import Alert
 from .models import InventoryItem, InventoryLog
-
-
-def stock_status(quantity, threshold):
-    if quantity == 0:
-        return "Out of Stock"
-    if quantity <= threshold:
-        return "Low Stock"
-    return "In Stock"
+from .queries import IN_STOCK, stock_status
 
 
 @transaction.atomic
@@ -54,7 +47,7 @@ def apply_quantity_change(*, item_id, user, change, action_type):
     )
 
     # Alert only when the status gets worse, so repeated updates don't spam
-    if new_status != old_status and new_status != "In Stock":
+    if new_status != old_status and new_status != IN_STOCK:
         Alert.objects.create(
             item=item,
             alert_type=new_status,
