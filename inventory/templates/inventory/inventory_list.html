@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Inventory</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    th { background: #f0f0f0; }
+    .low { background: #fff3cd; }
+    .out { background: #f8d7da; }
+    .filters, .pager { margin: 1rem 0; }
+    .filters input, .filters select, .filters button { margin-right: 0.4rem; padding: 4px; }
+    .messages { list-style: none; padding: 0; }
+    .messages li { padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; }
+    .messages .success { background: #d4edda; }
+    .messages .error { background: #f8d7da; }
+    .qty-form input[type=number] { width: 5rem; }
+  </style>
+</head>
+<body>
+  <h1>Inventory</h1>
+
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <form method="get" class="filters">
+    {{ form.q }}
+    {{ form.category }}
+    {{ form.location }}
+    {{ form.status }}
+    {{ form.sort }}
+    <button type="submit">Apply</button>
+    <a href="{% url 'inventory:list' %}">Reset</a>
+  </form>
+
+  <p>{{ page_obj.paginator.count }} item{{ page_obj.paginator.count|pluralize }} found</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th><th>Category</th><th>Quantity</th><th>Threshold</th>
+        <th>Location</th><th>Status</th><th>Update</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in page_obj %}
+        <tr class="{% if item.quantity == 0 %}out{% elif item.quantity <= item.threshold %}low{% endif %}">
+          <td>{{ item.name }}</td>
+          <td>{{ item.category.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ item.threshold }}</td>
+          <td>{{ item.location }}</td>
+          <td>{{ item.stock_status }}</td>
+          <td>
+            <form method="post" action="{% url 'inventory:update_quantity' item.pk %}" class="qty-form">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <select name="action_type">
+                <option value="Restock">Restock</option>
+                <option value="Usage">Usage</option>
+              </select>
+              <input type="number" name="amount" min="1" value="1" required>
+              <button type="submit">Apply</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7">No items found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="pager">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&{{ query_string }}">Previous</a>{% endif %}
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&{{ query_string }}">Next</a>{% endif %}
+  </div>
+</body>
+</html>

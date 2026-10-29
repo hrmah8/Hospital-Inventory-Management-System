@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Alerts</title>
+</head>
+<body>
+    <h1>Inventory Stock Alerts</h1>
+    <p>Items that are out of stock or have reached their low-stock threshold are listed below. </p>
+
+    {% if alerts %}
+        <table borders="1" cellpadding="8">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                    <th>Threshold</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+        </tbody>
+        {% for item in alerts %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.category.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.threshold }}</td>
+                <td>{{ item.location|default:"Not specified" }}</td>
+                <td>
+                    {% if item.quantity == 0 %}
+                        Out of Stock
+                    {% else %}
+                        Low Stock
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No stock alerts. All inventory items are above their thresholds.</p>
+{% endif %}
+
+<p><a href="{% url 'inventory_list' %}">Back to Inventory</a></p>
+</body>
+</html>
