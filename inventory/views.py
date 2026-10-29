@@ -1,3 +1,10 @@
-from django.shortcuts import render
+from .alerts import get stock_alerts
 
-# Create your views here.
+def stock_alerts(request):
+    alerts = get_stock_alerts()
+    
+    return render(
+        request,
+        "inventory/stock_alerts.html",
+        {"alerts": alerts},
+    )
