@@ -11,8 +11,20 @@ from django.views.decorators.http import require_POST
 from .forms import InventoryFilterForm, QuantityUpdateForm
 from .models import InventoryItem
 from .services import apply_quantity_change
+from .alerts import get_stock_alerts
+from .models import Category, InventoryItem
 
 
+@login_required
+def stock_alerts(request):
+    alerts = get_stock_alerts()
+    
+    return render(
+        request,
+        "inventory/stock_alerts.html",
+        {"alerts": alerts},
+    )
+    
 @login_required
 def inventory_list(request):
     form = InventoryFilterForm(request.GET or None)
