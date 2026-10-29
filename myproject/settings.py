@@ -130,3 +130,6 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+# Login handling (temporary: uses the built-in admin login until accounts has its own)
+LOGIN_URL = '/admin/login/'
+LOGIN_REDIRECT_URL = '/inventory/'
