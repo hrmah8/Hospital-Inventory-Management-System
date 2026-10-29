@@ -1,7 +1,9 @@
-from django.db.models import F, Sum
+from django.db.models import Count, F, Sum
 
 from inventory.models import InventoryItem, InventoryLog
 from inventory.queries import (
+    LOW_STOCK,
+    OUT_OF_STOCK,
     items_needing_restock,
     low_stock_items,
     out_of_stock_items,
@@ -34,6 +36,36 @@ def low_stock_report():
         }
         for item in items
     ]
+
+
+def current_inventory_report(category=None, location=""):
+    """Data for the Current Inventory Report (Report1), optionally filtered."""
+    items = InventoryItem.objects.all()
+    if category:
+        items = items.filter(category=category)
+    if location:
+        items = items.filter(location=location)
+
+    rows = [
+        {"item": item, "status": stock_status(item.quantity, item.threshold)}
+        for item in items.select_related("category").order_by("category__name", "name")
+    ]
+
+    # order_by() clears any sorting first; otherwise the grouping would split by item name
+    by_category = list(
+        items.order_by()
+        .values("category__name")
+        .annotate(item_count=Count("pk"), total_units=Sum("quantity"))
+        .order_by("category__name")
+    )
+
+    summary = {
+        "total_items": len(rows),
+        "total_units": sum(row["item"].quantity for row in rows),
+        "low_stock": sum(1 for row in rows if row["status"] == LOW_STOCK),
+        "out_of_stock": sum(1 for row in rows if row["status"] == OUT_OF_STOCK),
+    }
+    return {"rows": rows, "by_category": by_category, "summary": summary}
 
 
 def recent_movements(limit=20):
