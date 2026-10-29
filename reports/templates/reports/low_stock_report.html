@@ -1,49 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Low-Stock Report</title>
-  <style>
-    body { font-family: sans-serif; margin: 2rem; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
-    th { background: #f0f0f0; }
-    .low { background: #fff3cd; }
-    .out { background: #f8d7da; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Title</title>
 </head>
 <body>
-  <h1>Low-Stock Report</h1>
-  <p><a href="{% url 'inventory:list' %}">Back to inventory</a></p>
 
-  <p>
-    {{ summary.low_stock }} low stock,
-    {{ summary.out_of_stock }} out of stock,
-    {{ summary.total_items }} items tracked
-  </p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Item</th><th>Category</th><th>Quantity</th><th>Threshold</th>
-        <th>Shortage</th><th>Location</th><th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for row in rows %}
-        <tr class="{% if row.item.quantity == 0 %}out{% else %}low{% endif %}">
-          <td>{{ row.item.name }}</td>
-          <td>{{ row.item.category.name }}</td>
-          <td>{{ row.item.quantity }}</td>
-          <td>{{ row.item.threshold }}</td>
-          <td>{{ row.shortage }}</td>
-          <td>{{ row.item.location }}</td>
-          <td>{{ row.status }}</td>
-        </tr>
-      {% empty %}
-        <tr><td colspan="7">No items need restocking.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
 </body>
 </html>
