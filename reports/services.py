@@ -20,11 +20,25 @@ def stock_summary():
     }
 
 
-def low_stock_report():
-    """Rows for the Low-Stock Report, biggest shortfall first."""
+def low_stock_report(category=None, location="", status=""):
+    """Rows for the Low-Stock Report (Report2), biggest shortfall first.
+
+    status: "" = low and out of stock, "low" = low only, "out" = out of stock only.
+    """
+    if status == "low":
+        items = low_stock_items()
+    elif status == "out":
+        items = out_of_stock_items()
+    else:
+        items = items_needing_restock()
+
+    if category:
+        items = items.filter(category=category)
+    if location:
+        items = items.filter(location=location)
+
     items = (
-        items_needing_restock()
-        .select_related("category")
+        items.select_related("category")
         .annotate(shortage=F("threshold") - F("quantity"))
         .order_by("-shortage", "name")
     )
