@@ -21,7 +21,7 @@
 </head>
 <body>
   <h1>Inventory</h1>
-
+    <p><a href="{% url 'reports:low_stock' %}">Low-Stock Report</a> | <a href="{% url 'reports:current_inventory' %}">Current Inventory Report</a></p>
   {% if messages %}
     <ul class="messages">
       {% for message in messages %}

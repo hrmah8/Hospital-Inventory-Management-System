@@ -21,3 +21,13 @@ class CurrentInventoryFilterForm(forms.Form):
             .distinct()
         )
         self.fields["location"].choices = [("", "All locations")] + [(l, l) for l in locations]
+
+
+class LowStockFilterForm(CurrentInventoryFilterForm):
+    STATUS_CHOICES = [
+        ("", "Low and out of stock"),
+        ("low", "Low stock only"),
+        ("out", "Out of stock only"),
+    ]
+
+    status = forms.ChoiceField(choices=STATUS_CHOICES, required=False)

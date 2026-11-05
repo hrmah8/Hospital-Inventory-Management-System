@@ -1,10 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="utf-8">
+  <title>Low-Stock Report</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    th { background: #f0f0f0; }
+    .low { background: #fff3cd; }
+    .out { background: #f8d7da; }
+    .filters { margin: 1rem 0; }
+    .filters select, .filters button { margin-right: 0.4rem; padding: 4px; }
+    .error { color: #842029; }
+  </style>
 </head>
 <body>
+  <h1>Low-Stock Report</h1>
+  <p>
+    <a href="{% url 'inventory:list' %}">Back to inventory</a> |
+    <a href="{% url 'reports:current_inventory' %}">Current Inventory Report</a>
+  </p>
 
+  <form method="get" class="filters">
+    {{ form.category }}
+    {{ form.location }}
+    {{ form.status }}
+    <button type="submit">Apply</button>
+    <a href="{% url 'reports:low_stock' %}">Reset</a> |
+    <a href="{% url 'reports:low_stock_export' %}?{{ request.GET.urlencode }}">Download CSV</a>
+  </form>
+
+  {% if form.errors %}
+    <p class="error">Some filters were not valid and were ignored.</p>
+  {% endif %}
+
+  <p>
+    {{ rows|length }} item{{ rows|length|pluralize }} shown.
+    Overall: {{ summary.low_stock }} low stock,
+    {{ summary.out_of_stock }} out of stock,
+    {{ summary.total_items }} items tracked
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th><th>Category</th><th>Quantity</th><th>Threshold</th>
+        <th>Shortage</th><th>Location</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr class="{% if row.item.quantity == 0 %}out{% else %}low{% endif %}">
+          <td>{{ row.item.name }}</td>
+          <td>{{ row.item.category.name }}</td>
+          <td>{{ row.item.quantity }}</td>
+          <td>{{ row.item.threshold }}</td>
+          <td>{{ row.shortage }}</td>
+          <td>{{ row.item.location }}</td>
+          <td>{{ row.status }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7">No items need restocking.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </body>
 </html>
