@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Current Inventory Report</title>
+  <style>
+    body { font-family: sans-serif; margin: 2rem; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 1.5rem; }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    th { background: #f0f0f0; }
+    .low { background: #fff3cd; }
+    .out { background: #f8d7da; }
+    .filters { margin: 1rem 0; }
+    .filters select, .filters button { margin-right: 0.4rem; padding: 4px; }
+    .error { color: #842029; }
+  </style>
+</head>
+<body>
+  <h1>Current Inventory Report</h1>
+  <p>
+    <a href="{% url 'inventory:list' %}">Back to inventory</a> |
+    <a href="{% url 'reports:low_stock' %}">Low-Stock Report</a>
+  </p>
+
+  <form method="get" class="filters">
+    {{ form.category }}
+    {{ form.location }}
+    <button type="submit">Apply</button>
+    <a href="{% url 'reports:current_inventory' %}">Reset</a> |
+    <a href="{% url 'reports:current_inventory_export' %}?{{ request.GET.urlencode }}">Download CSV</a>
+  </form>
+
+  {% if form.errors %}
+    <p class="error">Some filters were not valid and were ignored.</p>
+  {% endif %}
+
+  <p>
+    {{ summary.total_items }} items,
+    {{ summary.total_units }} units in stock,
+    {{ summary.low_stock }} low stock,
+    {{ summary.out_of_stock }} out of stock
+  </p>
+
+  <h2>By category</h2>
+  <table>
+    <thead>
+      <tr><th>Category</th><th>Items</th><th>Total units</th></tr>
+    </thead>
+    <tbody>
+      {% for c in by_category %}
+        <tr>
+          <td>{{ c.category__name }}</td>
+          <td>{{ c.item_count }}</td>
+          <td>{{ c.total_units }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">No items found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>All items</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Item</th><th>Category</th><th>Quantity</th><th>Threshold</th>
+        <th>Location</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+        <tr class="{% if row.item.quantity == 0 %}out{% elif row.status == 'Low Stock' %}low{% endif %}">
+          <td>{{ row.item.name }}</td>
+          <td>{{ row.item.category.name }}</td>
+          <td>{{ row.item.quantity }}</td>
+          <td>{{ row.item.threshold }}</td>
+          <td>{{ row.item.location }}</td>
+          <td>{{ row.status }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">No items found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>
