@@ -2,12 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import InventoryItem
 from .forms import InventoryItemForm
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 def inventory_list(request):
     items = InventoryItem.objects.all().order_by('name')
     return render(request, 'inventory/inventory_list.html', {'items': items})
 
+@login_required
 def inventory_add(request):
     if request.method == "POST":
         form = InventoryItemForm(request.POST)
@@ -23,6 +25,7 @@ def inventory_add(request):
         "title": "Add Inventory Item"
     })
 
+@login_required
 def inventory_edit(request, pk):
     item = get_object_or_404(InventoryItem, pk=pk)
 
@@ -40,6 +43,7 @@ def inventory_edit(request, pk):
         "title": "Edit Inventory Item"
     })
 
+@login_required
 def inventory_delete(request, pk):
     item = get_object_or_404(InventoryItem, pk=pk)
 
