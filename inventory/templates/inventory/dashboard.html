@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hospital Inventory Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background: #eef3f8;
+            color: #243247;
+        }
+
+        header, .panel {
+            background: white;
+            padding: 22px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        h1 {
+            color: #176b68;
+        }
+
+        .stats {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            flex: 1;
+            min-width: 160px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        input {
+            padding: 11px;
+            width: min(70%, 350px);
+            border: 1px solid #ccd5df;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 11px 16px;
+            border: none;
+            border-radius: 6px;
+            background: #176b68;
+            color: white;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 13px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        th {
+            background: #f5f8fa;
+        }
+
+        .low {
+            color: #b42318;
+            font-weight: bold;
+        }
+
+        .normal {
+            color: #16734b;
+            font-weight: bold;
+        }
+
+        @media (max-width: 650px) {
+            body {
+                padding: 14px;
+            }
+
+            .table-wrapper {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Hospital Inventory</h1>
+            <p>Welcome, {{ request.user.username }}</p>
+        </div>
+
+        <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit">Sign Out</button>
+        </form>
+    </header>
+
+    <section class="stats">
+        <div class="stat">
+            <p>Items in Results</p>
+            <div class="number">{{ total_items }}</div>
+        </div>
+
+        <div class="stat">
+            <p>Low-Stock Items</p>
+            <div class="number">{{ low_stock_count }}</div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Inventory Search</h2>
+
+        <form method="get">
+            <input
+                type="search"
+                name="q"
+                value="{{ search_query }}"
+                placeholder="Search name, category, or location"
+                aria-label="Search inventory"
+            >
+            <button type="submit">Search</button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>Current Inventory</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th>Quantity</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <!-- 1. FIXED: Added '.name' to accurately fetch the text category name from the backend model -->
+                        <td>{{ item.category.name|default:"Uncategorized" }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.location|default:"Not specified" }}</td>
+                        <td>
+                            <!-- 2. FIXED: Comparing quantity to the backend low_stock_threshold value dynamically -->
+                            {% if item.quantity <= item.low_stock_threshold %}
+                                <span class="low">Low Stock</span>
+                            {% else %}
+                                <span class="normal">In Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No inventory items found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Hospital Inventory{% endblock %}</title>
+    <!-- Bootstrap 5 CSS CDN for clean styles -->
+    <link href="https://jsdelivr.net" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <!-- This placeholder dynamically loads content from other pages -->
+    <div class="container mt-5">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://jsdelivr.net"></script>
+</body>
+</html>
