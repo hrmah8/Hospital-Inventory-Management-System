@@ -1,58 +1,5 @@
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import InventoryItem
-from .forms import InventoryItemForm
-
-# Create your views here.
-def inventory_list(request):
-    items = InventoryItem.objects.all().order_by('name')
-    return render(request, 'inventory/inventory_list.html', {'items': items})
-
-def inventory_add(request):
-    if request.method == "POST":
-        form = InventoryItemForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Inventory item added successfully.")
-            return redirect("inventory_list")
-    else:
-        form = InventoryItemForm()
-
-    return render(request, "inventory/inventory_form.html", {
-        "form": form,
-        "title": "Add Inventory Item"
-    })
-
-def inventory_edit(request, pk):
-    item = get_object_or_404(InventoryItem, pk=pk)
-
-    if request.method == "POST":
-        form = InventoryItemForm(request.POST, instance=item)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Inventory item updated successfully.")
-            return redirect("inventory_list")
-    else:
-        form = InventoryItemForm(instance=item)
-
-    return render(request, "inventory/inventory_form.html", {
-        "form": form,
-        "title": "Edit Inventory Item"
-    })
-
-def inventory_delete(request, pk):
-    item = get_object_or_404(InventoryItem, pk=pk)
-
-    if request.method == "POST":
-        item.delete()
-        messages.success(request, "Inventory item removed successfully.")
-        return redirect("inventory_list")
-
-    return render(request, "inventory/inventory_confirm_delete.html", {
-        "item": item
-    })
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import F, Q
@@ -61,14 +8,62 @@ from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
-from .forms import InventoryFilterForm, QuantityUpdateForm
-from .models import InventoryItem
-from .services import apply_quantity_change
 from .alerts import get_stock_alerts
+from .forms import InventoryFilterForm, InventoryItemForm, QuantityUpdateForm
 from .models import Category, InventoryItem
+from .services import apply_quantity_change
+
+# Create your views here.
+@login_required
+@permission_required("inventory.add_inventoryitem", raise_exception=True)
+def inventory_add(request):
+    if request.method == "POST":
+        form = InventoryItemForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Inventory item added successfully.")
+            return redirect("inventory:list")
+    else:
+        form = InventoryItemForm()
+
+    return render(request, "inventory/inventory_form.html", {
+        "form": form,
+        "title": "Add Inventory Item"
+    })
+    
+@login_required
+@permission_required("inventory.change_inventoryitem", raise_exception=True)
+def inventory_edit(request, pk):
+    item = get_object_or_404(InventoryItem, pk=pk)
+
+    if request.method == "POST":
+        form = InventoryItemForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Inventory item updated successfully.")
+            return redirect("inventory:list")
+    else:
+        form = InventoryItemForm(instance=item)
+
+    return render(request, "inventory/inventory_form.html", {
+        "form": form,
+        "title": "Edit Inventory Item"
+    })
+
+@login_required
+@permission_required("inventory.delete_inventoryitem", raise_exception=True)
+@require_POST
+def inventory_delete(request, pk):
+    item = get_object_or_404(InventoryItem, pk=pk)
+
+    item.delete()
+    messages.success(request, "Inventory item removed successfully.")
+    return redirect("inventory:list")
+
 
 
 @login_required
+@permission_required("inventory.view_inventoryitem", raise_exception=True)
 def stock_alerts(request):
     alerts = get_stock_alerts()
     
@@ -79,6 +74,7 @@ def stock_alerts(request):
     )
     
 @login_required
+@permission_required("inventory.view_inventoryitem", raise_exception=True)
 def inventory_list(request):
     form = InventoryFilterForm(request.GET or None)
     items = InventoryItem.objects.select_related("category")
@@ -126,10 +122,12 @@ def inventory_list(request):
 
 
 @login_required
+@permission_required("inventory.change_inventoryitem", raise_exception=True)
 @require_POST
 def update_quantity(request, pk):
     item = get_object_or_404(InventoryItem, pk=pk)
     form = QuantityUpdateForm(request.POST)
+        
 
     if form.is_valid():
         try:

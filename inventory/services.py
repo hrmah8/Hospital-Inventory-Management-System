@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F
 
-from alerts.models import Alert
+from alerts.models import StockAlert
 from .models import InventoryItem, InventoryLog
 from .queries import IN_STOCK, stock_status
 
@@ -48,9 +48,8 @@ def apply_quantity_change(*, item_id, user, change, action_type):
 
     # Alert only when the status gets worse, so repeated updates don't spam
     if new_status != old_status and new_status != IN_STOCK:
-        Alert.objects.create(
+        StockAlert.objects.create(
             item=item,
-            alert_type=new_status,
             message=f"{item.name} is {new_status.lower()} "
                     f"({item.quantity} left, threshold {item.threshold}).",
         )

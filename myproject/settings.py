@@ -42,6 +42,13 @@ INSTALLED_APPS = [
     'inventory',
     'alerts',
     'reports',
+    
+    #Required 'allauth' apps
+    'allauth',
+    'allauth.account',
+    
+    #The MFA App
+    'allauth.mfa',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'myproject.urls'
@@ -131,5 +139,18 @@ MAILERS = {
     },
 }
 # Login handling (temporary: uses the built-in admin login until accounts has its own)
-LOGIN_URL = '/admin/login/'
+LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/inventory/'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Multi-Factor Authentication
+MFA_SUPPORTED_TYPES = [
+    "totp",
+    "recovery_codes",
+]
+
+MFA_TOTP_ISSUER = "Hospital Inventory Management System"

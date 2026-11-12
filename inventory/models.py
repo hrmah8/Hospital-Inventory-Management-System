@@ -30,6 +30,13 @@ class InventoryItem(models.Model):
         elif self.quantity <= self.threshold:
             return "Low Stock"
         return "In Stock"
+    
+    class Meta: permissions = [
+        (
+            "configure_inventory_threshold",
+            "Can configure inventory low-stock thresholds",
+        ),
+    ]
 
 class InventoryLog(models.Model):
     ACTION_CHOICES = [
